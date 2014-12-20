@@ -21,14 +21,62 @@ MotorG = Flywheel Motors
 
 #include "JoystickDriver.c"
 
+bool latchDown = false
+
 task main()
 {
   while(true)                            // Infinite loop:
   {
     getJoystickSettings(joystick);
 
-    //Drive Controlls
-    motor[motorE] = joystick.joy1_y2;         // Motor D is assigned a power level equal to the right analog stick's Y-axis reading.
-    motor[motorF] = joystick.joy1_y1;         // Motor E is assigned a power level equal to the left analog stick's Y-axis reading.
+    int threshold = 15;
+
+    //Right Side Drive Controll
+    if(abs(joystick.joy1_y2) > threshold) {
+    	motor[motorE] = joystick.joy1_y2;         // Motor E is assigned a power level equal to the right analog stick's Y-axis reading.
+ 		}
+ 		else [
+ 			motor[motorE] = 0;
+		}
+    //Left Side Drive Controll
+		if(abs(joystick.joy1_y1) > threshold) {
+				 motor[motorF] = joystick.joy1_y1;         // Motor F is assigned a power level equal to the left analog stick's Y-axis reading.
+		}
+		else {
+			motor[motorF] = 0;
+  	}
+
+  	//Controlls Flywheels with (hopefully) the Left Trigger [LT]
+  	if(joy1Btn(8)) {
+  		motor[motorG] = 100; //Sets FlyWheel to 100% Power
+  	}
+  	else {
+  		motor[motorG] = 0;
+  	}
+
+  	//Controlls the Spinner with (Hopefully) the Right Trigger [RT]
+  	if(joy1Btn(7)) {
+  		motor[motorD] = 75; //Sets spinner to 75% Power
+  	}
+  	else {
+  		motor[motorD] = 0;
+  	}
+
+  	//Button input to controll the servo
+  	if(joy1Btn([X])) && latchDown == false {
+  		latchDown = true
+  	}
+  	if(joy1Btn([X])) && latchDown == true {
+  		latchDown = false
+  	}
+
+  	//Moves the servo up and down
+  	if (latchDown == true) {
+  		servo[servo1] = 0;  //Set Servo value for Lowered position
+ 	 }
+ 	 if (latchDown == false) {
+ 	 		servo[servo1] = 100;  //Ser servo value for Up position
+ 	 }
+
   }
 }
