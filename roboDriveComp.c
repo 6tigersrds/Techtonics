@@ -14,69 +14,72 @@
 
 /*
 MotorD = Spinning Test motor
-ModorE = Right side drive motors
+MotorE = Right side drive motors
 MotorF = Left side drive motors
 MotorG = Flywheel Motors
 */
 
 #include "JoystickDriver.c"
 
-bool latchDown = false
+// VARIABLES
+bool GOALLATCH_latchDown = false;
+
+// CONSTANTS
+int DRIVING_joystickDeadzone = 15;
+int FLYWHEEL_onSpeed = 100;
+int FLYWHEEL_offSpeed = 0;
+int BALLCOLLECTION_onSpeed = 75;
+int BALLCOLLECTION_offSpeed = 0;
+int GOALLATCH_upPosition = 0;
+int GOALLATCH_downPosition = 100;
 
 task main()
 {
-  while(true)                            // Infinite loop:
+  while(true)
   {
     getJoystickSettings(joystick);
 
-    int threshold = 15;
-
-    //Right Side Drive Controll
-    if(abs(joystick.joy1_y2) > threshold) {
-    	motor[motorE] = joystick.joy1_y2;         // Motor E is assigned a power level equal to the right analog stick's Y-axis reading.
+    // DRIVING CONTROLS
+    if(abs(joystick.joy1_y2) > DRIVING_joystickDeadzone) { // joystick.joy1_y2 is the y-axis on the right analog stick
+    	motor[motorE] = joystick.joy1_y2; // joystick.joy1_y2 is the y-axis on the right analog stick
  		}
- 		else [
+ 		else {
  			motor[motorE] = 0;
 		}
-    //Left Side Drive Controll
-		if(abs(joystick.joy1_y1) > threshold) {
-				 motor[motorF] = joystick.joy1_y1;         // Motor F is assigned a power level equal to the left analog stick's Y-axis reading.
+		if(abs(joystick.joy1_y1) > DRIVING_joystickDeadzone) { // joystick.joy1_y1 is the y-axis on the left analog stick
+			motor[motorF] = joystick.joy1_y1; // joystick.joy1_y1 is the y-axis on the left analog stick
 		}
 		else {
 			motor[motorF] = 0;
   	}
 
-  	//Controlls Flywheels with (hopefully) the Left Trigger [LT]
-  	if(joy1Btn(8)) {
-  		motor[motorG] = 100; //Sets FlyWheel to 100% Power
+    // FLYWHEEL CONTROLS  	
+  	if(joy1Btn(8)) { // joy1Btn(8) is the left trigger
+  		motor[motorG] = FLYWHEEL_onSpeed; // motor[motorG] is the flywheel
   	}
   	else {
-  		motor[motorG] = 0;
+  		motor[motorG] = FLYWHEEL_offSpeed; // motor[motorG] is the flywheel
   	}
 
-  	//Controlls the Spinner with (Hopefully) the Right Trigger [RT]
-  	if(joy1Btn(7)) {
-  		motor[motorD] = 75; //Sets spinner to 75% Power
+  	// BALL COLLECTION MOTOR CONTROLS
+  	if(joy1Btn(7)) { // joy1Btn(7) is the right trigger
+  		motor[motorD] = BALLCOLLECTION_onSpeed; // motor[motorD] is the ball collection motor
   	}
   	else {
-  		motor[motorD] = 0;
+  		motor[motorD] = BALLCOLLECTION_offSpeed; // motor[motorD] is the ball collection motor
   	}
 
-  	//Button input to controll the servo
-  	if(joy1Btn([X])) && latchDown == false {
-  		latchDown = true
-  	}
-  	if(joy1Btn([X])) && latchDown == true {
-  		latchDown = false
-  	}
-
-  	//Moves the servo up and down
-  	if (latchDown == true) {
-  		servo[servo1] = 0;  //Set Servo value for Lowered position
- 	 }
- 	 if (latchDown == false) {
- 	 		servo[servo1] = 100;  //Ser servo value for Up position
- 	 }
-
+  	
+  	// GOAL LATCH CONTROLS
+  	if(joy1Btn(0)) { // joy1Btn(0) is the "X" button
+  		GOALLATCH_latchDown = !GOALLATCH_latchDown;
+	  }
+	  
+  	if(GOALLATCH_latchDown) {
+  		servo[servo1] = GOALLATCH_upPosition; // servo[servo1] is the goal latch
+ 	 	}
+ 	 	else {
+ 	 		servo[servo1] = GOALLATCH_downPosition; // servo[servo1] is the goal latch
+ 	 	}
   }
 }
