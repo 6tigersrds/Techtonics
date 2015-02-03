@@ -1,5 +1,2 @@
 Techtonics
 ==========
-
-Techtonics
-Hello, World!
