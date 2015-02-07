@@ -36,13 +36,13 @@ int max(int a, int b) {
     return max;
 }
 
-int robotSpeedL = 0;
-int robotSpeedR = 0;
+int robotSpeedL = 0; // Speed of left wheels
+int robotSpeedR = 0; // Speed of right wheels
 bool innerServoDown = false;
 bool outerServoDown = false;
-bool ljb_new = true;
-bool rjb_new = true;
-int joyVal = 0;
+bool ljb_new = true; // Was the left servo button pushed down last time the code ran
+bool rjb_new = true; // Was the left servo button pushed down last time the code ran
+int joyVal = 0; // Value of the higher-absolute-value joystick on controller 2 (See line 137 for use)
 
 task main() {
 	while(true) {
