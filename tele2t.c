@@ -24,16 +24,17 @@ MotorH = Lift
 
 #include "JoystickDriver.c"
 
+int accelerationInterval = 1;
 int threshold = 15;
-int outerServoDownAngle = 100;
+int outerServoDownAngle = 150;
 int outerServoUpAngle = 250;
-int innerServoDownAngle = 50;
-int innerServoUpAngle = 175;
+int innerServoDownAngle = 150;
+int innerServoUpAngle = 250;
 int max(int a, int b) {
-    int c = a - b;
-    int k = (c >> 31) & 0x1;
-    int max = a - k * c;
-    return max;
+	return (a<b)?b:a;
+}
+int min(int a, int b) {
+	return (a<b)?a:b;
 }
 
 int robotSpeedL = 0; // Speed of left wheels
@@ -43,6 +44,7 @@ bool outerServoDown = false;
 bool ljb_new = true; // Was the left servo button pushed down last time the code ran
 bool rjb_new = true; // Was the left servo button pushed down last time the code ran
 int joyVal = 0; // Value of the higher-absolute-value joystick on controller 2 (See line 137 for use)
+int flywheelSlowdownCooldown = 0;
 
 task main() {
 	while(true) {
@@ -51,43 +53,59 @@ task main() {
     // I. Steering
 		// Part 1: Speed
 		if(joy1Btn(8) == 1 && joy1Btn(7) == 0) {
-			robotSpeedL = 100;
-			robotSpeedR = 100;
+			robotSpeedL = min(100, robotSpeedL + accelerationInterval);
+			robotSpeedR = min(100, robotSpeedR + accelerationInterval);
 		}
-		else if(joy1Btn(7) == 1 && joy1Btn(8) >= 0) {
-			robotSpeedL = -100;
-			robotSpeedR = -100;
-		}
-		else if(joy1Btn(8) == 1 && joy1Btn(7) == 1) {
-			robotSpeedL = 50;
-			robotSpeedR = 50;
+		else if(joy1Btn(7) == 1 && joy1Btn(8) == 0) {
+			robotSpeedL = max(-100, robotSpeedL - accelerationInterval);
+			robotSpeedR = max(-100, robotSpeedR - accelerationInterval);
 		}
 		else {
-			robotSpeedL = 0;
-			robotSpeedR = 0;
+			if(robotSpeedL >= accelerationInterval) {
+				robotSpeedL -= accelerationInterval;
+			}
+			else if(robotSpeedL <= -accelerationInterval) {
+				robotSpeedL += accelerationInterval;
+			}
+			else {
+				robotSpeedL = 0;
+			}
+			
+			if(robotSpeedR >= accelerationInterval) {
+				robotSpeedR -= accelerationInterval;
+			}
+			else if(robotSpeedR <= -accelerationInterval) {                                                                                                                                                                                                                                                                       
+				
+				robotSpeedR += accelerationInterval;
+			}
+			else {
+				robotSpeedR = 0;
+			}
 		}
 		// Part 2: Steering
 		if(abs(joystick.joy1_x1) >= threshold) {
 			if(joystick.joy1_x1 > 0) { // Going right
-				robotSpeedR -= ((joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedR * 1.5);
+				robotSpeedR -= ((joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedR * .7);
 			}
 			else { // Going left
-				robotSpeedL -= ((-joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedL * 1.5);
+				robotSpeedL -= ((-joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedL * .7);
 			}
 		}
 		// II. Servos
-		if(joy1Btn(11)) { // Left joystick button (for outer latch)
+		if(joy1Btn(2) || joy1Btn(3)) { // Left joystick button (for outer latch)
 			if(ljb_new) {
 				outerServoDown = !outerServoDown;
+				ljb_new = false;
 			}
 		}
 		else {
 			ljb_new = true;
 		}
 		
-		if(joy1Btn(12)) { // Right joystick button (for inner latch)
+		if(joy1Btn(1) || joy1Btn(4)) { // Right joystick button (for inner latch)
 			if(rjb_new) {
 				innerServoDown = !innerServoDown;
+				rjb_new = false;
 			}
 		}
 		else {
@@ -106,26 +124,30 @@ task main() {
  			servo[sideServo] = outerServoUpAngle; //Set servo value for up position
  		}
 		
-		if (innerServoDown) {
-  	  servo[centerServo] = innerServoDownAngle;  //Set Servo value for Lowered position
+		if(innerServoDown) {
+  	  servo[centerServo] = innerServoDownAngle;  //Set Servo value for lowered position
  	 	}
  		else {
- 	    servo[centerServo] = innerServoUpAngle;  //Set servo value for Up position
+ 	    servo[centerServo] = innerServoUpAngle;  //Set servo value for up position
  	  }
  	  // IV. 2nd joystick
  	  // Part 1: Flywheel
   	if(joy2Btn(8)) {
-  		motor[motorG] = 100; //Sets flywheel to 100% power
+  		motor[motorG] = 100; // Sets flywheel to 100% power
   	}
-  	else { // I am not messing with this else condition. Ctrl+C, ctrl+V, move on.
-  		while(motor[motorG] > 1) {
-  			motor[motorG] = motor[motorG] - 1;
-  			delay(1);
+  	else if(motor[motorG] > 0) { // Code below is a bit complex. (Ask Quinn.)
+  		if(flywheelSlowdownCooldown > 0) {
+  			flywheelSlowdownCooldown -= 1;
   		}
-  		if (motor[motorG] == 1) {
-  			delay(900);
+  		else {
+  			motor[motorG] -= 1;
+  			if(motor[motorG] == 1) {
+  				flywheelSlowdownCooldown = 900;
+  			}
+  			else {
+  				flywheelSlowdownCooldown = 1;
+  			}
   		}
-  		motor[motorG] = 0;
   	}
   	// Part 2: Ball collector
   	if(joy2Btn(7)) {
@@ -135,14 +157,17 @@ task main() {
 	  	motor[motorD] = 0;
 		}
 		// Part 3: Lift
-		if(max(abs(joystick.joy2_y1), abs(joystick.joy2_y1)) > threshold) {
-			if(max(abs(joystick.joy2_y1), abs(joystick.joy2_y1)) == abs(joystick.joy2_y1)) {
+		if(max(abs(joystick.joy2_y1), abs(joystick.joy2_y2)) > threshold) {
+			if(max(abs(joystick.joy2_y1), abs(joystick.joy2_y2)) == abs(joystick.joy2_y1)) {
 				joyVal = joystick.joy2_y1;
 			}
 			else {
 				joyVal = joystick.joy2_y2;
 			}
 			motor[motorH] = joyVal;
+		}
+		else {
+			motor[motorH] = 0;
 		}
 	}
 }
