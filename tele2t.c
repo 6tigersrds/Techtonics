@@ -68,11 +68,11 @@ task main() {
 		}
 		// Part 2: Steering
 		if(abs(joystick.joy1_x1) >= threshold) {
-			if(joystick.joy1_x1 > 0) { // When > 0, joystick is left
-				robotSpeedL = robotSpeedL - (abs(joystick.joy1_x1) - 15); // -15 to threshold jump
+			if(joystick.joy1_x1 > 0) { // Going right
+				robotSpeedR -= ((joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedR * 1.5);
 			}
-			else { // Joystick is right
-				robotSpeedR = robotSpeedR - (abs(joystick.joy1_x1) - 15); // -15 to threshold jump
+			else { // Going left
+				robotSpeedL -= ((-joystick.joy1_x1 - threshold) / (100-threshold)) * (robotSpeedL * 1.5);
 			}
 		}
 		// II. Servos
