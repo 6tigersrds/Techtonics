@@ -24,7 +24,7 @@ MotorH = Lift
 
 #include "JoystickDriver.c"
 int handling = 0.4;
-int accelerationCooldownInterval = 20;
+int accelerationCooldownInterval = 80;
 int accelerationInterval = 1;
 int threshold = 15;
 int outerServoDownAngle = 150;
@@ -95,10 +95,10 @@ task main() {
 			else {
 				robotSpeedR = 0;
 			}
-			accelerationCooldown = accelerationCooldownInterval
+			accelerationCooldown = accelerationCooldownInterval;
 		}
 		else {
-			accelerationCooddown -= 1;
+			accelerationCooldown -= 1;
 		}
 		// Part 2: Steering
 		if(abs(joystick.joy1_x1) >= threshold) {
